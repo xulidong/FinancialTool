@@ -5,6 +5,7 @@
 依赖库 tushare 安装：
 
 ``` bash
+pip install bs4
 pip install lxml
 pip install pandas
 pip install tushare

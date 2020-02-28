@@ -1,36 +1,53 @@
-import datetime
+# coding: utf-8
 import tushare as ts
+import matplotlib.pyplot as plt
+import matplotlib.dates as dat
+import numpy
+import math
+# to remove warn
+from pandas.plotting import register_matplotlib_converters
+
+register_matplotlib_converters()
 
 TOKEN = 'dbe457b7700aee993af8075d00ffedf4ea4471024eb556f2153d92d5'
-STOCK_POOL = ['002174.SZ', '002517.SZ', '002555.SZ', '002624.SZ']
+
+# 股指代码
+STOCK_LIST = [
+    # 主要股指
+    "sh",  # 上证综指
+    "sz",  # 深证成指
+    # "zxb",  # 中小板指
+    # "cyb",  # 创业板指
+    # 细分指数
+    # "sz50",  # 上证50
+    "hs300",  # 沪深300
+    "000905",  # 中证500
+]
+START_DATE = "2019-01-01"
 
 
 def main():
-	print(ts.__version__)
-	ts.set_token(TOKEN)
-	pro = ts.pro_api()
+    print("tushare version:%s" % ts.__version__)
+    ts.set_token(TOKEN)
+    pro = ts.pro_api()
+    col = 2
+    row = math.ceil(len(STOCK_LIST) / float(col))
+    for i, stock in enumerate(STOCK_LIST):
+        df = ts.get_hist_data(stock, start=START_DATE)
+        df.sort_index()
+        xs = []
+        for d in df.index:
+            trans_date = dat.strpdate2num("%Y-%m-%d")(d)
+            xs.append(trans_date)
+        average = numpy.mean(df["close"])
+        plt.subplot(row, col, i + 1)
+        plt.title(stock)
+        plt.plot_date(xs, df["close"], "r-")
+        plt.axhline(y=average, color="b")
 
-	stocks = pro.stock_basic(exchange_id='', is_hs='', fields='symbol,name,list_date,list_status')
-	print stocks
-
-	now = datetime.datetime.now()
-	start_dt = now - datetime.timedelta(days=91)
-	start_dt = start_dt.strftime('%Y%m%d')
-	end_dt = now - datetime.timedelta(days=1)
-	end_dt = end_dt.strftime('%Y%m%d')
-	print('from ' + start_dt + ' to ' + end_dt)
-
-	total = len(STOCK_POOL)
-	for i in range(len(STOCK_POOL)):
-		try:
-			df = pro.daily(ts_code=STOCK_POOL[i], start_date=start_dt, end_date=end_dt)
-			print('The stock: (' + str(i + 1) + ' / ' + str(total) + ') Code: ' + str(STOCK_POOL[i]))
-			print(df)
-		except Exception as e:
-			print(STOCK_POOL[i] + ': ' + str(e))
-			continue
-	print('All Finished!')
+    plt.gcf().autofmt_xdate()
+    plt.show()
 
 
 if __name__ == '__main__':
-	main()
+    main()
